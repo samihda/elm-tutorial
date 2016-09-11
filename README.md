@@ -1,1 +1,1 @@
-Personal repository for elm tutorial apps
+Personal repository for [Elm tutorial](http://guide.elm-lang.org/) and other apps

@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "summary": "Personal repository for elm tutorial apps",
+    "summary": "Personal repository for Elm tutorial and other apps",
     "repository": "https://github.com/samihda/elm-tutorial.git",
     "license": "BSD3",
     "source-directories": [
