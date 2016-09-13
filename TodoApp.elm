@@ -16,22 +16,29 @@ type alias Todo =
   , text : String
   , isCompleted : Bool
   }
-  
+
+type Visibility
+  = All
+  | Active
+  | Completed
+
 type alias Model =
   { input : String
   , todos : List Todo
   , currentId : Int
+  , visibility : Visibility
   }
 
 model : Model
 model =
-  Model "" [] 1
+  Model "" [] 1 All
 
 type Msg
   = Input String
   | AddTodo
   | RemoveTodo Int
   | ToggleCompleted Todo
+  | Filter Visibility
 
 update : Msg -> Model -> Model
 update msg model =
@@ -39,33 +46,58 @@ update msg model =
     Input todo ->
       { model | input = todo }
     AddTodo ->
-      Model "" (Todo model.currentId model.input False :: model.todos) (model.currentId + 1)
+      Model
+        ""
+        (Todo model.currentId model.input False :: model.todos)
+        (model.currentId + 1)
+        All
     RemoveTodo id ->
       { model | todos = removeTodo id model.todos }
     ToggleCompleted todo ->
       { model | todos =
         (Todo todo.id todo.text (not todo.isCompleted)) :: (removeTodo todo.id model.todos) }
+    Filter newVisibility ->
+      { model | visibility = newVisibility }
       
-
 view : Model -> Html Msg
 view model =
   div []
     [ input [ type' "text", value model.input, onInput Input ] []
     , button [ onClick AddTodo ] [ text "Add" ]
-    , todoList model.todos
+    , filterVisibility model.visibility model.todos
+      |> createTodoList
+    , div []
+      [ createFilterButton "All" All (model.visibility == All)
+      , createFilterButton "Active" Active (model.visibility == Active)
+      , createFilterButton "Completed" Completed (model.visibility == Completed)
+      ]
     ]
 
-todoList : List Todo -> Html Msg
-todoList todos =
+filterVisibility : Visibility -> List Todo -> List Todo
+filterVisibility visibility todos =
+  case visibility of
+    All ->
+      todos
+    Active ->
+      List.filter (\t -> not t.isCompleted) todos
+    Completed ->
+      List.filter (\t -> t.isCompleted) todos
+
+createFilterButton : String -> Visibility -> Bool -> Html Msg
+createFilterButton label visibility isActive =
+  button [ disabled isActive, onClick (Filter visibility) ] [ text label ]
+
+createTodoList : List Todo -> Html Msg
+createTodoList todos =
   let
-    list = List.map todoItem (List.sortBy .id todos)
+    list = List.map createTodoItem (List.sortBy .id todos)
   in
     ul [] list
 
-todoItem : Todo -> Html Msg
-todoItem todo =
+createTodoItem : Todo -> Html Msg
+createTodoItem todo =
   li
-    [ style [ ("text-decoration", markFinished todo.isCompleted) ]
+    [ style [ ("text-decoration", toggleCompleted todo.isCompleted) ]
     ]
     [ text todo.text
     , button [ onClick (ToggleCompleted todo) ] [ text "Toggle" ]
@@ -76,8 +108,8 @@ removeTodo : Int -> List Todo -> List Todo
 removeTodo id list =
   List.filter (\todo -> todo.id /= id) list
 
-markFinished : Bool -> String
-markFinished bool =
+toggleCompleted : Bool -> String
+toggleCompleted bool =
   if bool == True then
     "line-through"
   else
