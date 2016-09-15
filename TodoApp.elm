@@ -97,7 +97,10 @@ createTodoList todos =
 createTodoItem : Todo -> Html Msg
 createTodoItem todo =
   li
-    [ style [ ("text-decoration", toggleCompleted todo.isCompleted) ]
+    [ style
+      [ ("text-decoration", toggleCompleted todo.isCompleted)
+      , ("list-style", "none")
+      ]
     ]
     [ label []
       [ input
