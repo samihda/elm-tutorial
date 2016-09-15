@@ -39,6 +39,7 @@ type Msg
   | RemoveTodo Int
   | ToggleCompleted Todo
   | Filter Visibility
+  | ToggleAll Bool
 
 update : Msg -> Model -> Model
 update msg model =
@@ -58,12 +59,21 @@ update msg model =
         (Todo todo.id todo.text (not todo.isCompleted)) :: (removeTodo todo.id model.todos) }
     Filter newVisibility ->
       { model | visibility = newVisibility }
+    ToggleAll bool ->
+      { model | todos = List.map (\t -> { t | isCompleted = bool }) model.todos }
       
 view : Model -> Html Msg
 view model =
   div []
     [ input [ type' "text", value model.input, onInput Input ] []
     , button [ onClick AddTodo ] [ text "Add" ]
+    , input
+      [ type' "checkbox"
+      , checked (List.length model.todos > 0 && isAllCompleted model.todos)
+      , onClick (ToggleAll (isAllCompleted model.todos |> not))
+      , disabled (List.length model.todos == 0)
+      ]
+      []
     , filterVisibility model.visibility model.todos
       |> createTodoList
     , createCounter model.todos
@@ -125,6 +135,10 @@ toggleCompleted bool =
     "line-through"
   else
     "none"
+
+isAllCompleted : List Todo -> Bool
+isAllCompleted todos =
+  List.length todos == (List.filter (filterCompleted False) todos |> List.length)
 
 createCounter : List Todo -> Html a
 createCounter todos =
