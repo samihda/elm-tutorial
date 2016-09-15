@@ -112,7 +112,7 @@ createTodoItem todo =
         []
       , text todo.text
       ]
-    , button [ onClick (RemoveTodo todo.id) ] [ text "X" ] 
+    , button [ onClick (RemoveTodo todo.id) ] [ text "✕" ] 
     ]
 
 removeTodo : Int -> List Todo -> List Todo
