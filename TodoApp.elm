@@ -66,6 +66,7 @@ view model =
     , button [ onClick AddTodo ] [ text "Add" ]
     , filterVisibility model.visibility model.todos
       |> createTodoList
+    , createCounter model.todos
     , div []
       [ createFilterButton "All" All (model.visibility == All)
       , createFilterButton "Active" Active (model.visibility == Active)
@@ -79,9 +80,9 @@ filterVisibility visibility todos =
     All ->
       todos
     Active ->
-      List.filter (\t -> not t.isCompleted) todos
+      List.filter (filterCompleted True) todos
     Completed ->
-      List.filter (\t -> t.isCompleted) todos
+      List.filter (filterCompleted False) todos
 
 createFilterButton : String -> Visibility -> Bool -> Html Msg
 createFilterButton label visibility isActive =
@@ -124,3 +125,19 @@ toggleCompleted bool =
     "line-through"
   else
     "none"
+
+createCounter : List Todo -> Html a
+createCounter todos =
+  let
+    count =
+      List.filter (filterCompleted True) todos
+        |> List.length
+  in
+    div [] [ text (toString count) ]
+
+filterCompleted : Bool -> Todo -> Bool
+filterCompleted flag todo =
+  if flag == True then
+    not todo.isCompleted
+  else
+    todo.isCompleted
