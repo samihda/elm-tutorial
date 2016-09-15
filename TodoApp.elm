@@ -99,8 +99,15 @@ createTodoItem todo =
   li
     [ style [ ("text-decoration", toggleCompleted todo.isCompleted) ]
     ]
-    [ text todo.text
-    , button [ onClick (ToggleCompleted todo) ] [ text "Toggle" ]
+    [ label []
+      [ input
+        [ type' "checkbox"
+        , checked todo.isCompleted
+        , onClick (ToggleCompleted todo) 
+        ]
+        []
+      , text todo.text
+      ]
     , button [ onClick (RemoveTodo todo.id) ] [ text "X" ] 
     ]
 
