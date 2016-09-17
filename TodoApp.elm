@@ -24,7 +24,7 @@ type Visibility
   | Completed
 
 type alias Model =
-  { input : String
+  { textInput : String
   , todos : List Todo
   , currentId : Int
   , visibility : Visibility
@@ -49,9 +49,9 @@ update : Msg -> Model -> Model
 update msg model =
   case msg of
     Input todo ->
-      { model | input = todo }
+      { model | textInput = todo }
     AddTodo ->
-      Model "" (Todo model.currentId model.input False False :: model.todos) (model.currentId + 1) All
+      Model "" (Todo model.currentId model.textInput False False :: model.todos) (model.currentId + 1) All
     RemoveTodo id ->
       { model | todos = removeTodo id model.todos }
     ToggleCompleted todo ->
@@ -71,24 +71,24 @@ update msg model =
       { model | todos = List.filter (filterCompleted True) model.todos }
       
 view : Model -> Html Msg
-view model =
+view { textInput, todos, visibility } =
   div []
-    [ input [ type' "text", value model.input, onInput Input ] []
+    [ input [ type' "text", value textInput, onInput Input ] []
     , button [ onClick AddTodo ] [ text "Add" ]
     , input
       [ type' "checkbox"
-      , checked (List.length model.todos > 0 && isAllCompleted model.todos)
-      , onClick (ToggleAll (isAllCompleted model.todos |> not))
-      , disabled (List.length model.todos == 0)
+      , checked (List.length todos > 0 && isAllCompleted todos)
+      , onClick (ToggleAll (isAllCompleted todos |> not))
+      , disabled (List.length todos == 0)
       ]
       []
-    , createTodoList model.visibility model.todos
-    , createCounter model.todos
-    , createClearButton model.todos
+    , createTodoList visibility todos
+    , createCounter todos
+    , createClearButton todos
     , div []
-      [ createFilterButton "All" All (model.visibility == All)
-      , createFilterButton "Active" Active (model.visibility == Active)
-      , createFilterButton "Completed" Completed (model.visibility == Completed)
+      [ createFilterButton "All" All (visibility == All)
+      , createFilterButton "Active" Active (visibility == Active)
+      , createFilterButton "Completed" Completed (visibility == Completed)
       ]
     ]
 
