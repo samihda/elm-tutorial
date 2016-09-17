@@ -43,6 +43,7 @@ type Msg
   | ToggleAll Bool
   | ToggleEditor Todo
   | Edit Todo String
+  | ClearCompleted
 
 update : Msg -> Model -> Model
 update msg model =
@@ -66,6 +67,8 @@ update msg model =
     Edit todo newText ->
       { model | todos =
         { todo | text = newText } :: removeTodo todo.id model.todos }
+    ClearCompleted ->
+      { model | todos = List.filter (filterCompleted True) model.todos }
       
 view : Model -> Html Msg
 view model =
@@ -82,6 +85,7 @@ view model =
     , filterVisibility model.visibility model.todos
       |> createTodoList
     , createCounter model.todos
+    , createClearButton model.todos
     , div []
       [ createFilterButton "All" All (model.visibility == All)
       , createFilterButton "Active" Active (model.visibility == Active)
@@ -98,6 +102,14 @@ filterVisibility visibility todos =
       List.filter (filterCompleted True) todos
     Completed ->
       List.filter (filterCompleted False) todos
+
+createClearButton : List Todo -> Html Msg
+createClearButton todos =
+  let
+    isDisabled =
+      not ((List.filter (filterCompleted False) todos |> List.length) > 0)
+  in
+    button [ disabled isDisabled, onClick ClearCompleted ] [ text "Clear completed" ]
 
 createFilterButton : String -> Visibility -> Bool -> Html Msg
 createFilterButton label visibility isActive =
