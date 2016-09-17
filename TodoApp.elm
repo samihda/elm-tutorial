@@ -1,6 +1,6 @@
 import Html exposing (..)
 import Html.App as App
-import Html.Events exposing (onInput, onClick)
+import Html.Events exposing (onInput, onClick, onBlur)
 import Html.Attributes exposing (..)
 
 main : Program Never
@@ -15,6 +15,7 @@ type alias Todo =
   { id : Int
   , text : String
   , isCompleted : Bool
+  , isBeingEdited : Bool
   }
 
 type Visibility
@@ -40,6 +41,8 @@ type Msg
   | ToggleCompleted Todo
   | Filter Visibility
   | ToggleAll Bool
+  | ToggleEditor Todo
+  | Edit Todo String
 
 update : Msg -> Model -> Model
 update msg model =
@@ -47,20 +50,22 @@ update msg model =
     Input todo ->
       { model | input = todo }
     AddTodo ->
-      Model
-        ""
-        (Todo model.currentId model.input False :: model.todos)
-        (model.currentId + 1)
-        All
+      Model "" (Todo model.currentId model.input False False :: model.todos) (model.currentId + 1) All
     RemoveTodo id ->
       { model | todos = removeTodo id model.todos }
     ToggleCompleted todo ->
       { model | todos =
-        (Todo todo.id todo.text (not todo.isCompleted)) :: (removeTodo todo.id model.todos) }
+        { todo | isCompleted = not todo.isCompleted } :: removeTodo todo.id model.todos }
     Filter newVisibility ->
       { model | visibility = newVisibility }
     ToggleAll bool ->
       { model | todos = List.map (\t -> { t | isCompleted = bool }) model.todos }
+    ToggleEditor todo ->
+      { model | todos =
+        { todo | isBeingEdited = not todo.isBeingEdited } :: removeTodo todo.id model.todos }
+    Edit todo newText ->
+      { model | todos =
+        { todo | text = newText } :: removeTodo todo.id model.todos }
       
 view : Model -> Html Msg
 view model =
@@ -113,7 +118,28 @@ createTodoItem todo =
       , ("list-style", "none")
       ]
     ]
-    [ label []
+    [ createTodoEditor todo
+    , button
+      [ onClick (ToggleEditor todo) ]
+      [ (\b -> if b == True then "OK" else "Edit") todo.isBeingEdited
+        |> text
+      ]
+    , button [ onClick (RemoveTodo todo.id) ] [ text "✕" ]
+    ]
+
+createTodoEditor : Todo -> Html Msg
+createTodoEditor todo =
+  if todo.isBeingEdited == True then
+    input
+      [ id "editor"
+      , type' "text"
+      , value todo.text
+      , onInput (Edit todo)
+      , onBlur (ToggleEditor todo)
+      ]
+      []
+  else
+    label []
       [ input
         [ type' "checkbox"
         , checked todo.isCompleted
@@ -122,8 +148,6 @@ createTodoItem todo =
         []
       , text todo.text
       ]
-    , button [ onClick (RemoveTodo todo.id) ] [ text "✕" ] 
-    ]
 
 removeTodo : Int -> List Todo -> List Todo
 removeTodo id list =
