@@ -184,7 +184,12 @@ createCounter todos =
       List.filter (filterCompleted True) todos
         |> List.length
   in
-    div [] [ text (toString count) ]
+    div
+      []
+      [ toString count
+        |> (++) "To do: "
+        |> text
+      ]
 
 filterCompleted : Bool -> Todo -> Bool
 filterCompleted flag todo =
