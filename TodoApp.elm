@@ -82,8 +82,7 @@ view model =
       , disabled (List.length model.todos == 0)
       ]
       []
-    , filterVisibility model.visibility model.todos
-      |> createTodoList
+    , createTodoList model.visibility model.todos
     , createCounter model.todos
     , createClearButton model.todos
     , div []
@@ -115,10 +114,12 @@ createFilterButton : String -> Visibility -> Bool -> Html Msg
 createFilterButton label visibility isActive =
   button [ disabled isActive, onClick (Filter visibility) ] [ text label ]
 
-createTodoList : List Todo -> Html Msg
-createTodoList todos =
+createTodoList : Visibility -> List Todo -> Html Msg
+createTodoList visibility todos =
   let
-    list = List.map createTodoItem (List.sortBy .id todos)
+    list = filterVisibility visibility todos
+      |> List.sortBy .id
+      |> List.map createTodoItem
   in
     ul [] list
 
