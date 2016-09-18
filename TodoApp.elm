@@ -1,6 +1,6 @@
 import Html exposing (..)
 import Html.App as App
-import Html.Events exposing (onInput, onClick, onBlur)
+import Html.Events exposing (onInput, onClick)
 import Html.Attributes exposing (..)
 import String exposing (trim)
 
@@ -155,7 +155,6 @@ createTodoEditor todo =
       , type' "text"
       , value todo.text
       , onInput (Edit todo)
-      , onBlur (ToggleEditor todo)
       ]
       []
   else
