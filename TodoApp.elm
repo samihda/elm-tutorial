@@ -2,6 +2,7 @@ import Html exposing (..)
 import Html.App as App
 import Html.Events exposing (onInput, onClick, onBlur)
 import Html.Attributes exposing (..)
+import String exposing (trim)
 
 main : Program Never
 main =
@@ -74,7 +75,11 @@ view : Model -> Html Msg
 view { textInput, todos, visibility } =
   div []
     [ input [ type' "text", value textInput, onInput Input ] []
-    , button [ onClick AddTodo ] [ text "Add" ]
+    , button
+      [ onClick AddTodo
+      , disabled (trim textInput == "")
+      ]
+      [ text "Add" ]
     , input
       [ type' "checkbox"
       , checked (List.length todos > 0 && isAllCompleted todos)
@@ -133,7 +138,9 @@ createTodoItem todo =
     ]
     [ createTodoEditor todo
     , button
-      [ onClick (ToggleEditor todo) ]
+      [ onClick (ToggleEditor todo)
+      , disabled (trim todo.text == "")
+      ]
       [ (\b -> if b == True then "OK" else "Edit") todo.isBeingEdited
         |> text
       ]
