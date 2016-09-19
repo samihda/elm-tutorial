@@ -1,15 +1,17 @@
 import Html exposing (..)
-import Html.App as App
 import Html.Events exposing (onInput, onClick)
 import Html.Attributes exposing (..)
 import String exposing (trim)
+import Navigation
 
 main : Program Never
 main =
-  App.beginnerProgram
-    { model = model
+  Navigation.program urlParser
+    { init = init
     , view = view
     , update = update
+    , urlUpdate = urlUpdate
+    , subscriptions = subscriptions
     }
 
 type alias Todo =
@@ -31,9 +33,9 @@ type alias Model =
   , visibility : Visibility
   }
 
-model : Model
-model =
-  Model "" [] 1 All
+init : String -> (Model, Cmd Msg)
+init url =
+  urlUpdate url (Model "" [] 1 All)
 
 type Msg
   = Input String
@@ -46,30 +48,69 @@ type Msg
   | Edit Todo String
   | ClearCompleted
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-  case msg of
-    Input todo ->
-      { model | textInput = todo }
-    AddTodo ->
-      Model "" (Todo model.currentId model.textInput False False :: model.todos) (model.currentId + 1) All
-    RemoveTodo id ->
-      { model | todos = removeTodo id model.todos }
-    ToggleCompleted todo ->
-      { model | todos =
-        { todo | isCompleted = not todo.isCompleted } :: removeTodo todo.id model.todos }
-    Filter newVisibility ->
-      { model | visibility = newVisibility }
-    ToggleAll bool ->
-      { model | todos = List.map (\t -> { t | isCompleted = bool }) model.todos }
-    ToggleEditor todo ->
-      { model | todos =
-        { todo | isBeingEdited = not todo.isBeingEdited } :: removeTodo todo.id model.todos }
-    Edit todo newText ->
-      { model | todos =
-        { todo | text = newText } :: removeTodo todo.id model.todos }
-    ClearCompleted ->
-      { model | todos = List.filter (filterCompleted True) model.todos }
+  let
+    newModel =
+      case msg of
+        Input todo ->
+          { model | textInput = todo }
+        AddTodo ->
+          Model "" (Todo model.currentId model.textInput False False :: model.todos) (model.currentId + 1) All
+        RemoveTodo id ->
+          { model | todos = removeTodo id model.todos }
+        ToggleCompleted todo ->
+          { model | todos =
+            { todo | isCompleted = not todo.isCompleted } :: removeTodo todo.id model.todos }
+        Filter newVisibility ->
+          { model | visibility = newVisibility }
+        ToggleAll bool ->
+          { model | todos = List.map (\t -> { t | isCompleted = bool }) model.todos }
+        ToggleEditor todo ->
+          { model | todos =
+            { todo | isBeingEdited = not todo.isBeingEdited } :: removeTodo todo.id model.todos }
+        Edit todo newText ->
+          { model | todos =
+            { todo | text = newText } :: removeTodo todo.id model.todos }
+        ClearCompleted ->
+          { model | todos = List.filter (filterCompleted True) model.todos }
+  in
+    (newModel, Navigation.newUrl (toUrl newModel.visibility))
+
+toUrl : Visibility -> String
+toUrl visibility =
+  let
+    view =
+      case visibility of
+        All -> ""
+        Active -> "active"
+        Completed -> "completed"
+  in
+    "#/" ++ view
+
+fromUrl : String -> String
+fromUrl url =
+  String.dropLeft 2 url
+
+urlParser : Navigation.Parser String
+urlParser =
+  Navigation.makeParser (fromUrl << .hash)
+
+urlUpdate : String -> Model -> (Model, Cmd Msg)
+urlUpdate url model =
+  case url of
+    "active" ->
+      ({ model | visibility = Active }, Cmd.none)
+    "completed" ->
+      ({ model | visibility = Completed }, Cmd.none)
+    "" ->
+      ({ model | visibility = All }, Cmd.none)
+    _ ->
+      ({ model | visibility = All }, Navigation.modifyUrl (toUrl All))
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Sub.none
       
 view : Model -> Html Msg
 view { textInput, todos, visibility } =
