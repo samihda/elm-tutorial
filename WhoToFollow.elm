@@ -52,10 +52,19 @@ update msg model =
     FetchFail _ ->
       (model, Cmd.none)
     Next index ->
-      (Model (List.filter (\u -> u /= getSuggestion index model.users) model.users) (List.Extra.replaceIf (\u -> u.id == 0) (getSuggestion index model.users) model.suggestions), Cmd.none)
+      let
+        newSuggestion = getSuggestion index model.users
+      in
+        ( Model
+          (List.filter (\u -> u /= newSuggestion) model.users)
+          (addNewSuggestion newSuggestion model.suggestions)
+        , Cmd.none
+        )
     Dismiss id ->
-      ({ model | suggestions = List.Extra.replaceIf (\u -> u.id == id) (User 0 "" "" "") model.suggestions }, List.length model.users - 1 |> getRandomIndex)
-  
+      ( { model | suggestions = removeSuggestion id model.suggestions }
+      , List.length model.users - 1 |> getRandomIndex
+      )
+
 getSuggestions : Int -> Cmd Msg
 getSuggestions offset =
   Task.perform FetchFail FetchSucceed (Http.get decode ("https://api.github.com/users?since=" ++ toString offset))
@@ -87,6 +96,20 @@ getSuggestion id users =
       user
     Nothing ->
       (User 0 "not found" "" "")
+
+removeSuggestion : Int -> List User -> List User
+removeSuggestion suggestionId suggestions =
+  List.Extra.replaceIf
+    (\u -> u.id == suggestionId)
+    (User 0 "" "" "")
+    suggestions
+
+addNewSuggestion : User -> List User -> List User
+addNewSuggestion newSuggestion suggestions =
+  List.Extra.replaceIf
+    (\u -> u.id == 0)
+    newSuggestion
+    suggestions
 
 view : Model -> Html Msg
 view { suggestions } =
