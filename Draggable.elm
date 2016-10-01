@@ -1,3 +1,5 @@
+module Draggable exposing (..)
+
 import Html exposing (..)
 import Html.App as App
 import Html.Attributes exposing (..)
@@ -15,6 +17,9 @@ main =
   }
 
 type alias Model =
+  Draggable
+
+type alias Draggable =
   { position : Position 
   , drag : Maybe Drag
   }
@@ -26,7 +31,7 @@ type alias Drag =
 
 init : (Model, Cmd Msg)
 init =
-  (Model (Position 0 0) Nothing, Cmd.none)
+  (Draggable (Position 0 0) Nothing, Cmd.none)
 
 type Msg
   = DragStart Position
@@ -41,11 +46,11 @@ updateHelp : Msg -> Model -> Model
 updateHelp msg ({ position, drag } as model) =
   case msg of
     DragStart xy ->
-      Model position (Just (Drag xy xy))
+      Draggable position (Just (Drag xy xy))
     DragAt xy ->
-      Model position (Maybe.map (\{ start } -> Drag start xy) drag)
+      Draggable position (Maybe.map (\{ start } -> Drag start xy) drag)
     DragEnd _ ->
-      Model (getPosition model) Nothing
+      Draggable (getPosition model) Nothing
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -55,7 +60,7 @@ subscriptions model =
     Just _ ->
       Sub.batch [ Mouse.moves DragAt, Mouse.ups DragEnd ]
 
-(=>) : a -> b -> (a, b)  
+(=>) : a -> b -> (a, b)
 (=>) = (,)
 
 view : Model -> Html Msg
@@ -87,11 +92,11 @@ px number =
   toString number ++ "px"
 
 getPosition : Model -> Position
-getPosition {position, drag} =
+getPosition { position, drag } =
   case drag of
     Nothing ->
       position
-    Just {start, current} ->
+    Just { start, current } ->
       Position
         (position.x + current.x - start.x)
         (position.y + current.y - start.y)
